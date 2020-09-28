@@ -8,7 +8,6 @@ import json
 
 clients_lock = threading.Lock()
 connected = 0
-#playerList = {}
 clients = {} # Creating an array that can have individual dictionaries
 
 def connectionLoop(sock):
@@ -27,7 +26,7 @@ def connectionLoop(sock):
 
             playerList = {"List": []}
             for c in clients:
-               templist = {"player":{"id":str(c)}}
+               templist = {"OtherPlayers":{"IPandPort":str(c)}}
                playerList["List"].append(templist)
 
                plist = json.dumps(playerList)
@@ -40,7 +39,7 @@ def connectionLoop(sock):
             for c in clients:
                sock.sendto(bytes(m,'utf8'), (c[0],c[1]))
 
-def cleanClients():
+def cleanClients(sock):
    while True:
       for c in list(clients.keys()):
          if (datetime.now() - clients[c]['lastBeat']).total_seconds() > 5:
@@ -48,6 +47,15 @@ def cleanClients():
             clients_lock.acquire()
             del clients[c]
             clients_lock.release()
+            
+            playerDroppedList = {"PlayerDropped": []}
+            for d in clients:
+               templist = {"PlayerDropped":{"IpandPort":str(c)}}
+               playerDroppedList["PlayerDropped"].append(templist)
+
+               dlist = json.dumps(playerDroppedList)
+               sock.sendto(bytes(dlist, 'utf8'), (d[0].d[1]))
+
       time.sleep(1)
 
 # addr = IP and PORT, 2 VALUES
@@ -82,7 +90,7 @@ def main():
    s.bind(('', port))
    start_new_thread(gameLoop, (s,))
    start_new_thread(connectionLoop, (s,))
-   start_new_thread(cleanClients,())
+   start_new_thread(cleanClients,(s,))
    while True:
       time.sleep(1)
 
