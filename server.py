@@ -29,13 +29,13 @@ def connectionLoop(sock):
                templist = {"OtherPlayers":{"IPandPort":str(c)}}
                playerList["List"].append(templist)
 
-               plist = json.dumps(playerList)
-               sock.sendto(bytes(plist,'utf8'), (addr[0],addr[1]))
-
+               
+            plist = json.dumps(playerList)
+            sock.sendto(bytes(plist,'utf8'), (addr[0],addr[1]))
             message = {"cmd": 0,"player":{"id":str(addr)}}
             m = json.dumps(message)
          
-            sock.sendto(bytes(m,'utf8'), (addr[0],addr[1]))
+            #sock.sendto(bytes(m,'utf8'), (addr[0],addr[1]))
             for c in clients:
                sock.sendto(bytes(m,'utf8'), (c[0],c[1]))
 
@@ -43,18 +43,18 @@ def cleanClients(sock):
    while True:
       for c in list(clients.keys()):
          if (datetime.now() - clients[c]['lastBeat']).total_seconds() > 5:
-            print('Dropped Client: ', c)
+            print('Dropped Client: ', c)  
+
+            droppedList = {"Yeeted from the server":{"ID":str(c)}}
+            dlist = json.dumps(droppedList)
+            for d in clients: 
+             sock.sendto(bytes(dlist, 'utf8'), (d[0],d[1]))
+
+              
+
             clients_lock.acquire()
             del clients[c]
             clients_lock.release()
-            
-            playerDroppedList = {"PlayerDropped": []}
-            for d in clients:
-               templist = {"PlayerDropped":{"IpandPort":str(c)}}
-               playerDroppedList["PlayerDropped"].append(templist)
-
-               dlist = json.dumps(playerDroppedList)
-               sock.sendto(bytes(dlist, 'utf8'), (d[0].d[1]))
 
       time.sleep(1)
 
